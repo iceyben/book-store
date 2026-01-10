@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////////////
+// USER
+//////////////////////////////////////////////////
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  borrows  Borrow[]
+  cart     Cart?
+  orders   Order[]
+  wishlist Wishlist[]
+  otps     OTP[]
+}
+
+//////////////////////////////////////////////////
+// CATEGORY
+//////////////////////////////////////////////////
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  books       Book[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////
+// BOOK (Borrow + Product)
+//////////////////////////////////////////////////
+model Book {
+  id          String  @id @default(uuid())
+  title       String
+  author      String
+  isbn        String  @unique
+  imageUrl    String?
+  description String?
+
+  // Borrowing
+  quantity  Int
+  available Int
+
+  // Selling
+  isForSale Boolean @default(false)
+  price     Float?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  borrows    Borrow[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  wishlisted Wishlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//////////////////////////////////////////////////
+// BORROW
+//////////////////////////////////////////////////
+model Borrow {
+  id         String       @id @default(uuid())
+  userId     String
+  bookId     String
+  status     BorrowStatus @default(PENDING)
+  borrowedAt DateTime?
+  returnedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+}
+
+//////////////////////////////////////////////////
+// CART
+//////////////////////////////////////////////////
+model Cart {
+  id       String  @id @default(uuid())
+  userId   String  @unique // ensures one-to-one relation
+  isActive Boolean @default(true)
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model CartItem {
+  id       String @id @default(uuid())
+  cartId   String
+  bookId   String
+  quantity Int    @default(1)
+
+  cart Cart @relation(fields: [cartId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([cartId, bookId])
+}
+
+//////////////////////////////////////////////////
+// WISHLIST (LIKES)
+//////////////////////////////////////////////////
+model Wishlist {
+  id     String @id @default(uuid())
+  userId String
+  bookId String
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+}
+
+//////////////////////////////////////////////////
+// ORDER
+//////////////////////////////////////////////////
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  status    OrderStatus @default(PENDING)
+  total     Float
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model OrderItem {
+  id       String @id @default(uuid())
+  orderId  String
+  bookId   String
+  price    Float
+  quantity Int
+
+  order Order @relation(fields: [orderId], references: [id])
+  book  Book  @relation(fields: [bookId], references: [id])
+}
+
+//////////////////////////////////////////////////
+// OTP
+//////////////////////////////////////////////////
+model OTP {
+  id        String   @id @default(uuid())
+  code      String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+
+//////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////
+enum BorrowStatus {
+  PENDING
+  APPROVED
+  RETURN_PENDING
+  RETURNED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  COMPLETED
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
