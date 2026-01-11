@@ -2,8 +2,17 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
+import cors from "cors";
 
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use(express.json());
+
+
 
 import booksRoutes from "./routes/book.route";
 import bookCategory from "./routes/book.category.route";
