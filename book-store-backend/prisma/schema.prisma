@@ -7,72 +7,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//////////////////////////////////////////////////
-// USER
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model User {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String     @unique
   password  String
-  role      UserRole @default(USER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  borrows  Borrow[]
-  cart     Cart?
-  orders   Order[]
-  wishlist Wishlist[]
-  otps     OTP[]
+  role      UserRole   @default(USER)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  borrows   Borrow[]
+  cart      Cart?
+  otps      OTP[]
+  orders    Order[]
+  wishlist  Wishlist[]
 }
 
-//////////////////////////////////////////////////
-// CATEGORY
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model Category {
   id          String   @id @default(uuid())
   name        String   @unique
   description String?
-  books       Book[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  books       Book[]
 }
 
-//////////////////////////////////////////////////
-// BOOK (Borrow + Product)
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model Book {
-  id          String  @id @default(uuid())
+  id          String      @id @default(uuid())
   title       String
   author      String
-  isbn        String  @unique
+  isbn        String      @unique
   imageUrl    String?
   description String?
-
-  // Borrowing
-  quantity  Int
-  available Int
-
-  // Selling
-  isForSale Boolean @default(false)
-  price     Float?
-
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
-
-  borrows    Borrow[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-  wishlisted Wishlist[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  quantity    Int
+  available   Int
+  isForSale   Boolean     @default(false)
+  price       Float?
+  categoryId  String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id])
+  borrows     Borrow[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  wishlisted  Wishlist[]
 }
 
-//////////////////////////////////////////////////
-// BORROW
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model Borrow {
   id         String       @id @default(uuid())
   userId     String
@@ -82,27 +70,22 @@ model Borrow {
   returnedAt DateTime?
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
+  book       Book         @relation(fields: [bookId], references: [id])
+  user       User         @relation(fields: [userId], references: [id])
 
   @@unique([userId, bookId])
 }
 
-//////////////////////////////////////////////////
-// CART
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model Cart {
-  id       String  @id @default(uuid())
-  userId   String  @unique // ensures one-to-one relation
-  isActive Boolean @default(true)
-
-  items CartItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  isActive  Boolean    @default(true)
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
 }
 
 model CartItem {
@@ -110,40 +93,35 @@ model CartItem {
   cartId   String
   bookId   String
   quantity Int    @default(1)
-
-  cart Cart @relation(fields: [cartId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
+  book     Book   @relation(fields: [bookId], references: [id])
+  cart     Cart   @relation(fields: [cartId], references: [id])
 
   @@unique([cartId, bookId])
 }
 
-//////////////////////////////////////////////////
-// WISHLIST (LIKES)
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model Wishlist {
   id     String @id @default(uuid())
   userId String
   bookId String
-
-  user User @relation(fields: [userId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
+  book   Book   @relation(fields: [bookId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 
   @@unique([userId, bookId])
 }
 
-//////////////////////////////////////////////////
-// ORDER
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model Order {
   id        String      @id @default(uuid())
   userId    String
   status    OrderStatus @default(PENDING)
   total     Float
-  items     OrderItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
 }
 
 model OrderItem {
@@ -152,30 +130,25 @@ model OrderItem {
   bookId   String
   price    Float
   quantity Int
-
-  order Order @relation(fields: [orderId], references: [id])
-  book  Book  @relation(fields: [bookId], references: [id])
+  book     Book   @relation(fields: [bookId], references: [id])
+  order    Order  @relation(fields: [orderId], references: [id])
 }
 
-//////////////////////////////////////////////////
-// OTP
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 model OTP {
   id        String   @id @default(uuid())
   code      String
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
 
-
-//////////////////////////////////////////////////
-// ENUMS
-//////////////////////////////////////////////////
+/// ///////////////////////////////////////////////
+/// ///////////////////////////////////////////////
 enum BorrowStatus {
   PENDING
   APPROVED

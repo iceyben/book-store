@@ -1,23 +1,29 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendOTPEmail = async (email: string, code: string) => {
-  const { EMAIL_USER, EMAIL_PASS } = process.env;
-
-  if (!EMAIL_USER || !EMAIL_PASS) {
-    console.log(`Sending OTP ${code} to ${email} (simulated, no credentials set)`);
+  console.log(`Attempting to send OTP to ${email}...`); // Log attempt
+  
+  if (!process.env.RESEND_API_KEY) {
+    console.error("❌ RESEND_API_KEY is missing from .env");
     return;
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-  });
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+      to: email,
+      subject: "Your OTP Code",
+      html: `<strong>${code}</strong>`,
+    });
 
-  await transporter.sendMail({
-    from: `"Book Store Backend" <${EMAIL_USER}>`,
-    to: email,
-    subject: "Your OTP Code",
-    text: `Your OTP code is: ${code}. It will expire in 10 minutes.`,
-    html: `<p>Your OTP code is: <strong>${code}</strong></p><p>It will expire in 10 minutes.</p>`,
-  });
+    if (error) {
+      console.error("❌ Resend API Error:", error);
+      return;
+    }
+    console.log("✅ Email sent successfully:", data?.id);
+  } catch (err) {
+    console.error("❌ Unexpected error sending email:", err);
+  }
 };

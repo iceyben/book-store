@@ -1,7 +1,7 @@
 console.log("🚀 server.ts loaded");
 
 import dotenv from "dotenv";
-dotenv.config(); // ✅ MUST be first
+dotenv.config();
 
 import app from "./app";
 import prisma from "./lib/prisma";
@@ -15,16 +15,17 @@ const startServer = async () => {
     console.log("Starting server...");
     console.log("Database: PostgreSQL (Prisma)");
 
-    // ✅ Test Prisma connection
-    await prisma.user.findMany();
-    console.log("✅ Prisma query successful");
+    // ✅ FORCE Prisma to connect on startup
+    await prisma.$connect();
+    console.log("✅ Prisma connected successfully");
 
     app.listen(port, () => {
       console.log(`✅ Server running on port ${port} (${NODE_ENV})`);
       console.log(`🔗 API prefix: ${prefix}`);
     });
   } catch (error) {
-    console.error("❌ Server startup failed", error);
+    console.error("❌ Server startup failed");
+    console.error(error);
     process.exit(1);
   }
 };

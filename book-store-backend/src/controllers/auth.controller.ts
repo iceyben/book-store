@@ -22,13 +22,15 @@ export class AuthController {
     }
   };
 
-  verifyOTP = async (_req: Request, res: Response) => {
+  verifyOTP = async (req: Request, res: Response) => {
     try {
-      // ✅ Token already created in middleware
-      res.status(200).json({
-        message: "OTP verified successfully",
-        token: res.locals.token,
-      });
+      const { userId, code } = req.body;
+      
+      // Verification logic lives in the service
+      const result = await this.authService.verifyOTP(userId, code);
+      
+      // result contains { message: "...", token: "..." }
+      res.status(200).json(result);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

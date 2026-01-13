@@ -5,16 +5,8 @@ import bcrypt from "bcryptjs";
 import { sendOTPEmail } from "../utils/sendOTPEmail";
 import { UserRole } from "../types/common.type";
 
-interface RegisterDto {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface LoginDto {
-  email: string;
-  password: string;
-}
+interface RegisterDto { name: string; email: string; password: string; }
+interface LoginDto { email: string; password: string; }
 
 export class AuthService {
   generateToken(user: { id: string; role: UserRole; isActive: boolean }) {
@@ -23,18 +15,16 @@ export class AuthService {
 
   register = async (data: RegisterDto) => {
     const email = data.email.toLowerCase();
-
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) throw new Error("Email already exists");
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-
     const user = await prisma.user.create({
       data: {
         name: data.name,
         email,
         password: hashedPassword,
-       role: PrismaUserRole.USER as unknown as UserRole,
+        role: PrismaUserRole.USER as any,
       },
     });
 
@@ -48,17 +38,11 @@ export class AuthService {
     });
 
     await sendOTPEmail(user.email, otp);
-
-    return {
-      message: "User registered successfully. Please verify OTP sent to your email.",
-      user: { id: user.id, email: user.email, name: user.name },
-    };
+    return { message: "User registered. Check email for OTP.", userId: user.id };
   };
 
   login = async (data: LoginDto) => {
-    const user = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase() },
-    });
+    const user = await prisma.user.findUnique({ where: { email: data.email.toLowerCase() } });
     if (!user) throw new Error("Invalid credentials");
 
     const isMatch = await bcrypt.compare(data.password, user.password);
@@ -66,21 +50,14 @@ export class AuthService {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await prisma.oTP.create({
-      data: {
-        code: otp,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
+      data: { code: otp, userId: user.id, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
     });
 
     await sendOTPEmail(user.email, otp);
-
-    return {
-      message: "OTP sent to your email. Please verify to complete login.",
-      user: { id: user.id, email: user.email, name: user.name },
-    };
+    return { message: "OTP sent to email", userId: user.id };
   };
 
+  // This method is used if you want to verify inside the controller directly
   verifyOTP = async (userId: string, code: string) => {
     const otpRecord = await prisma.oTP.findFirst({ where: { userId, code } });
     if (!otpRecord) throw new Error("Invalid OTP");

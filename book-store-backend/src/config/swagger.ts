@@ -6,29 +6,31 @@ export const swaggerOptions: swaggerJSDoc.Options = {
     info: {
       title: "Book Store API",
       version: "1.0.0",
-      description: "API documentation for Book Store backend",
+      description: "API documentation for Book Store",
     },
+    tags: [
+      {
+        name: "Auth",
+        description: "Authentication endpoints",
+      },
+    ],
     servers: [
       {
         url: "http://localhost:8000/api/v1",
       },
     ],
     components: {
-  securitySchemes: {
-    bearerAuth: {
-      type: "http",
-      scheme: "bearer",
-      bearerFormat: "JWT",
-    },
-  },
-},
-    security: [
-      {
-        bearerAuth: [],
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
       },
-    ],
+    },
+    security: [{ bearerAuth: [] }],
   },
-  apis: ["./src/routes/*.ts"], // 👈 where Swagger reads comments
+  apis: ["./src/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJSDoc(swaggerOptions);
