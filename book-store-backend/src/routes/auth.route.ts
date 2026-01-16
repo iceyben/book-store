@@ -118,5 +118,4 @@ router.post("/verify-otp", validate(otpSchema), controller.verifyOTP);
  * 400:
  * description: Invalid or expired OTP
  */
-
 export default router;
